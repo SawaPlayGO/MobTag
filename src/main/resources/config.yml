@@ -1,0 +1,125 @@
+# ╔══════════════════════════════════════╗
+# ║           MobTag Config              ║
+# ║        by Abood_8001 | v1.0.0        ║
+# ╚══════════════════════════════════════╝
+
+# -----------------------------------------------
+# GENERAL SETTINGS
+# -----------------------------------------------
+
+# Worlds where MobTag will NOT display tags
+blacklisted-worlds:
+  - example_world1
+  - example_world2
+
+softdepend:
+  - PlaceholderAPI
+  - MythicMobs
+  - SimplePets
+
+# How often (in ticks) the tags are updated.
+# 1 second = 20 ticks. Lower = smoother but more CPU. Recommended: 4
+update-interval: 4
+
+# The range (in blocks) a player must be within to see a tag.
+display-range: 16.0
+
+# Height offset of the tag above the mob's head (in blocks).
+tag-height-offset: 0.3
+
+# Who can see the tags?
+# Options:
+#   ALL     - All players within range see the tag
+#   DAMAGER - Only the player who last damaged the mob sees the tag
+visibility-mode: ALL
+
+# Ignore peaceful mobs (cows, pigs, sheep, etc)?
+ignore-passive: false
+
+# Ignore player entities?
+ignore-players: true
+
+# Should tags be shown on boss mobs (Ender Dragon, Wither)?
+show-on-bosses: true
+
+# -----------------------------------------------
+# TAG FORMAT
+# -----------------------------------------------
+# Available placeholders:
+#   {name}       - Mob's custom name (or type if no custom name)
+#   {type}       - Mob entity type (e.g. ZOMBIE)
+#   {current}    - Current health (rounded to 1 decimal)
+#   {max}        - Max health (rounded to 1 decimal)
+#   {bar}        - Health bar (see health-bar section below)
+#   {percent}    - Health percentage (e.g. 75.0)
+#
+# Color codes: Use & followed by a color code (e.g. &c = red, &a = green)
+# Hex colors: Use &#RRGGBB format (e.g. &#ff0000 = red)
+# -----------------------------------------------
+
+tag-format: "&c❤ &f{current}&7/&f{max} &7| {bar}"
+
+# -----------------------------------------------
+# HEALTH BAR
+# -----------------------------------------------
+
+health-bar:
+  # Total number of characters in the bar
+  length: 10
+
+  # Character used for filled portion
+  filled-char: "█"
+
+  # Character used for empty portion
+  empty-char: "░"
+
+  # Color of the filled portion
+  # Supports gradient based on health percentage:
+  #   Use 'gradient' to enable dynamic color
+  #   Or set a fixed color like '&a'
+  filled-color: gradient
+
+  # Colors for gradient (used when filled-color: gradient)
+  # high   = above 60% health
+  # medium = between 30% and 60%
+  # low    = below 30%
+  gradient-high: "&a"
+  gradient-medium: "&e"
+  gradient-low: "&c"
+
+  # Color of the empty portion
+  empty-color: "&8"
+
+# -----------------------------------------------
+# MYTHICMOBS INTEGRATION
+# -----------------------------------------------
+
+mythicmobs:
+  # Enable MythicMobs support?
+  enabled: true
+
+  # Show the MythicMob's internal name instead of entity type?
+  show-mythic-name: true
+
+  # Custom format for MythicMob tags (leave empty to use global tag-format)
+  # Supports same placeholders as tag-format plus:
+  #   {mythic_name} - The MythicMob's internal name
+  custom-format: "&5⚔ &f{mythic_name} &8| &c❤ &f{current}&7/&f{max} {bar}"
+
+# -----------------------------------------------
+# PLACEHOLDERAPI INTEGRATION
+# -----------------------------------------------
+
+placeholderapi:
+  # Enable PlaceholderAPI support?
+  enabled: true
+
+# -----------------------------------------------
+# MESSAGES
+# -----------------------------------------------
+
+messages:
+  prefix: "&8[&bMobTag&8] "
+  reload-success: "&aConfiguration reloaded successfully!"
+  no-permission: "&cYou don't have permission to do that."
+  unknown-command: "&cUnknown sub-command. Usage: /mobtag reload"

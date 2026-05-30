@@ -1,0 +1,21 @@
+name: MobTag
+version: '${project.version}'
+main: me.abood8001.mobtag.MobTag
+api-version: '1.21'
+author: Abood_8001
+description: Displays health tags above mobs with full customization.
+
+softdepend:
+  - PlaceholderAPI
+  - MythicMobs
+
+commands:
+  mobtag:
+    description: MobTag main command
+    usage: /mobtag reload
+    permission: mobtag.admin
+
+permissions:
+  mobtag.admin:
+    description: Allows use of /mobtag reload
+    default: op
