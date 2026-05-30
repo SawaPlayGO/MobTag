@@ -3,6 +3,8 @@ package me.abood8001.mobtag;
 import me.abood8001.mobtag.commands.MobTagCommand;
 import me.abood8001.mobtag.hooks.MythicMobsHook;
 import me.abood8001.mobtag.hooks.PAPIHook;
+import me.abood8001.mobtag.managers.ToggleManager;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class MobTag extends JavaPlugin {
@@ -11,6 +13,7 @@ public class MobTag extends JavaPlugin {
     private MobTagManager tagManager;
     private MobTagConfig mobTagConfig;
     private MythicMobsHook mythicMobsHook;
+    private ToggleManager toggleManager;
     private boolean papiEnabled = false;
     private boolean mythicMobsEnabled = false;
 
@@ -18,24 +21,23 @@ public class MobTag extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
-        // Save default config
         saveDefaultConfig();
         this.mobTagConfig = new MobTagConfig(this);
+        this.toggleManager = new ToggleManager(this);
 
-        // Setup hooks
         setupHooks();
 
-        // Setup manager & listeners
         this.tagManager = new MobTagManager(this);
         getServer().getPluginManager().registerEvents(new MobTagListener(this), this);
 
-        // Register command
         MobTagCommand cmd = new MobTagCommand(this);
         getCommand("mobtag").setExecutor(cmd);
         getCommand("mobtag").setTabCompleter(cmd);
 
-        // Start update task
         tagManager.startTask();
+
+        // bStats
+        new Metrics(this, 25516);
 
         getLogger().info("MobTag v" + getDescription().getVersion() + " enabled! by Abood_8001");
     }
@@ -49,7 +51,6 @@ public class MobTag extends JavaPlugin {
     }
 
     private void setupHooks() {
-        // PlaceholderAPI
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             if (mobTagConfig.isPapiEnabled()) {
                 new PAPIHook(this).register();
@@ -58,7 +59,6 @@ public class MobTag extends JavaPlugin {
             }
         }
 
-        // MythicMobs
         if (getServer().getPluginManager().getPlugin("MythicMobs") != null) {
             if (mobTagConfig.isMythicMobsEnabled()) {
                 mythicMobsHook = new MythicMobsHook(this);
@@ -71,35 +71,18 @@ public class MobTag extends JavaPlugin {
     public void reload() {
         reloadConfig();
         this.mobTagConfig = new MobTagConfig(this);
+        this.toggleManager = new ToggleManager(this);
         if (tagManager != null) {
             tagManager.removeAllTags();
             tagManager.reload();
         }
     }
 
-    // ── Getters ──────────────────────────────────────────────
-
-    public static MobTag getInstance() {
-        return instance;
-    }
-
-    public MobTagManager getTagManager() {
-        return tagManager;
-    }
-
-    public MobTagConfig getMobTagConfig() {
-        return mobTagConfig;
-    }
-
-    public MythicMobsHook getMythicMobsHook() {
-        return mythicMobsHook;
-    }
-
-    public boolean isPapiEnabled() {
-        return papiEnabled;
-    }
-
-    public boolean isMythicMobsEnabled() {
-        return mythicMobsEnabled;
-    }
+    public static MobTag getInstance() { return instance; }
+    public MobTagManager getTagManager() { return tagManager; }
+    public MobTagConfig getMobTagConfig() { return mobTagConfig; }
+    public MythicMobsHook getMythicMobsHook() { return mythicMobsHook; }
+    public ToggleManager getToggleManager() { return toggleManager; }
+    public boolean isPapiEnabled() { return papiEnabled; }
+    public boolean isMythicMobsEnabled() { return mythicMobsEnabled; }
 }

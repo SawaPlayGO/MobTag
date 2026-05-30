@@ -8,14 +8,22 @@ description: Displays health tags above mobs with full customization.
 softdepend:
   - PlaceholderAPI
   - MythicMobs
+  - SimplePets
 
 commands:
   mobtag:
     description: MobTag main command
-    usage: /mobtag reload
-    permission: mobtag.admin
+    usage: /mobtag reload|toggle
+    permission: mobtag.use
 
 permissions:
   mobtag.admin:
     description: Allows use of /mobtag reload
     default: op
+  mobtag.toggle:
+    description: Allows toggling mob health tags
+    default: true
+  mobtag.use:
+    description: Base permission
+    default: true
+

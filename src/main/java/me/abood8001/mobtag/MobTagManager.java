@@ -3,9 +3,8 @@ package me.abood8001.mobtag;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.*;
-import org.bukkit.scheduler.BukkitTask;
+
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,7 +19,6 @@ public class MobTagManager {
     // Maps mob UUID -> UUID of last damager
     private final Map<UUID, UUID> lastDamager = new ConcurrentHashMap<>();
 
-    private BukkitTask task;
 
     // Passive mob types
     private static final Set<EntityType> PASSIVE_TYPES = EnumSet.of(
@@ -43,12 +41,12 @@ public class MobTagManager {
 
     public void startTask() {
         MobTagConfig cfg = plugin.getMobTagConfig();
-        task = Bukkit.getScheduler().runTaskTimer(plugin, this::updateTags,
+        me.abood8001.mobtag.scheduler.SchedulerAdapter.runTaskTimer(plugin, this::updateTags,
                 cfg.getUpdateInterval(), cfg.getUpdateInterval());
     }
 
     public void reload() {
-        if (task != null) task.cancel();
+        me.abood8001.mobtag.scheduler.SchedulerAdapter.cancelAllTasks(plugin);
         startTask();
     }
 
@@ -60,16 +58,15 @@ public class MobTagManager {
         // Collect all living mobs across all worlds
         for (org.bukkit.World world : Bukkit.getWorlds()) {
             for (LivingEntity entity : world.getLivingEntities()) {
-                if (!shouldTag(entity)) continue;
-
-                // Find if any eligible player is nearby
-                Player viewer = getViewer(entity, rangeSquared, cfg.getVisibilityMode());
-
-                if (viewer != null) {
-                    showTag(entity, viewer);
-                } else {
-                    removeTag(entity.getUniqueId());
-                }
+                try {
+                    if (!shouldTag(entity)) continue;
+                    Player viewer = getViewer(entity, rangeSquared, cfg.getVisibilityMode());
+                    if (viewer != null && !plugin.getToggleManager().isHidden(viewer.getUniqueId())) {
+                        showTag(entity, viewer);
+                    } else {
+                        removeTag(entity.getUniqueId());
+                    }
+                } catch (Exception ignored) {}
             }
         }
 
@@ -186,7 +183,8 @@ public class MobTagManager {
         String mobName = getMobName(entity, cfg);
         String bar = buildBar(entity.getHealth(), max, cfg);
 
-        String format = cfg.getTagFormat();
+        String entityType = entity.getType().name();
+        String format = cfg.getEntityFormats().getOrDefault(entityType, cfg.getTagFormat());
 
         // MythicMobs custom format
         if (plugin.isMythicMobsEnabled() && plugin.getMythicMobsHook().isMythicMob(entity)) {
@@ -302,7 +300,7 @@ public class MobTagManager {
         }
         tags.clear();
         lastDamager.clear();
-        if (task != null) task.cancel();
+        me.abood8001.mobtag.scheduler.SchedulerAdapter.cancelAllTasks(plugin);
     }
 
     public void setLastDamager(UUID mobUID, UUID playerUID) {

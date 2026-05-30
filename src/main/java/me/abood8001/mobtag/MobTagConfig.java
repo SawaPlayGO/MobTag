@@ -2,6 +2,8 @@ package me.abood8001.mobtag;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 public class MobTagConfig {
 
@@ -41,6 +43,7 @@ public class MobTagConfig {
     private String msgUnknownCommand;
 
     private List<String> blacklistedWorlds;
+    private Map<String, String> entityFormats;
 
     public MobTagConfig(MobTag plugin) {
         this.plugin = plugin;
@@ -50,6 +53,12 @@ public class MobTagConfig {
     public void load() {
         FileConfiguration cfg = plugin.getConfig();
 
+        entityFormats = new HashMap<>();
+        if (cfg.isConfigurationSection("entity-formats")) {
+            for (String key : cfg.getConfigurationSection("entity-formats").getKeys(false)) {
+                entityFormats.put(key.toUpperCase(), cfg.getString("entity-formats." + key));
+            }
+        }
         blacklistedWorlds = cfg.getStringList("blacklisted-worlds");
         updateInterval    = cfg.getInt("update-interval", 4);
         displayRange      = cfg.getDouble("display-range", 16.0);
@@ -83,6 +92,7 @@ public class MobTagConfig {
 
     // ── Getters ──────────────────────────────────────────────
 
+    public Map<String, String> getEntityFormats() { return entityFormats; }
     public List<String> getBlacklistedWorlds() { return blacklistedWorlds; }
     public int getUpdateInterval() { return updateInterval; }
     public double getDisplayRange() { return displayRange; }

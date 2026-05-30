@@ -1,6 +1,6 @@
 # ╔══════════════════════════════════════╗
 # ║           MobTag Config              ║
-# ║        by Abood_8001 | v1.0.0        ║
+# ║        by Abood_8001                 ║
 # ╚══════════════════════════════════════╝
 
 # -----------------------------------------------
@@ -11,11 +11,6 @@
 blacklisted-worlds:
   - example_world1
   - example_world2
-
-softdepend:
-  - PlaceholderAPI
-  - MythicMobs
-  - SimplePets
 
 # How often (in ticks) the tags are updated.
 # 1 second = 20 ticks. Lower = smoother but more CPU. Recommended: 4
@@ -113,6 +108,18 @@ mythicmobs:
 placeholderapi:
   # Enable PlaceholderAPI support?
   enabled: true
+
+# -----------------------------------------------
+# PER ENTITY FORMATS
+# -----------------------------------------------
+# Override the global tag-format for specific entity types.
+# Use the entity type name in CAPS (e.g. ZOMBIE, CREEPER, ENDER_DRAGON)
+# Leave empty to use the global tag-format for all mobs.
+# Supports all the same placeholders as tag-format.
+
+entity-formats:
+  ENDER_DRAGON: "&5❤ &f{current}&7/&f{max} &7| {bar} &5[Dragon]"
+  WITHER: "&8❤ &f{current}&7/&f{max} &7| {bar} &8[Wither]"
 
 # -----------------------------------------------
 # MESSAGES
