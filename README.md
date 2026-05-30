@@ -1,0 +1,2 @@
+# MobTag
+A lightweight Minecraft plugin that displays health tags above mobs | 1.21.x
