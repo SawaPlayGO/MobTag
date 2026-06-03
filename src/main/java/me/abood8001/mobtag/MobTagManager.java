@@ -4,6 +4,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.*;
+import org.bukkit.util.RayTraceResult;
+import org.bukkit.util.Vector;
 
 
 import java.util.*;
@@ -92,6 +94,15 @@ public class MobTagManager {
             if (damager.getWorld() != entity.getWorld()) return null;
             double dist = damager.getLocation().distanceSquared(entity.getLocation());
             return dist <= rangeSquared ? damager : null;
+        } else if ("LOOKING_AT".equals(mode)) {
+            MobTagConfig cfg = plugin.getMobTagConfig();
+            for (Player p : entity.getWorld().getPlayers()) {
+                if (p.getGameMode() == org.bukkit.GameMode.SPECTATOR) continue;
+                double dist = p.getEyeLocation().distanceSquared(entity.getLocation());
+                if (dist > rangeSquared) continue;
+                if (isLookingAt(p, entity, cfg)) return p;
+            }
+            return null;
         } else {
             // ALL mode: find nearest player in range
             Player nearest = null;
@@ -309,5 +320,16 @@ public class MobTagManager {
 
     public Map<UUID, ArmorStand> getTags() {
         return tags;
+    }
+
+    private boolean isLookingAt(Player player, LivingEntity entity, MobTagConfig cfg) {
+        RayTraceResult result = player.getWorld().rayTraceEntities(
+                player.getEyeLocation(),
+                player.getEyeLocation().getDirection(),
+                cfg.getLookingLen(),
+                e -> !e.equals(player)
+        );
+        if (result == null) return false;
+        return entity.equals(result.getHitEntity());
     }
 }

@@ -11,6 +11,7 @@ public class MobTagConfig {
 
     private int updateInterval;
     private double displayRange;
+    private double lookingLen;
     private double tagHeightOffset;
     private String visibilityMode;
     private boolean ignorePassive;
@@ -62,6 +63,7 @@ public class MobTagConfig {
         blacklistedWorlds = cfg.getStringList("blacklisted-worlds");
         updateInterval    = cfg.getInt("update-interval", 4);
         displayRange      = cfg.getDouble("display-range", 16.0);
+        lookingLen        = cfg.getDouble("looking-len", 5.0);
         tagHeightOffset   = cfg.getDouble("tag-height-offset", 0.3);
         visibilityMode    = cfg.getString("visibility-mode", "ALL").toUpperCase();
         ignorePassive     = cfg.getBoolean("ignore-passive", false);
@@ -96,6 +98,7 @@ public class MobTagConfig {
     public List<String> getBlacklistedWorlds() { return blacklistedWorlds; }
     public int getUpdateInterval() { return updateInterval; }
     public double getDisplayRange() { return displayRange; }
+    public double getLookingLen() { return lookingLen; }
     public double getTagHeightOffset() { return tagHeightOffset; }
     public String getVisibilityMode() { return visibilityMode; }
     public boolean isIgnorePassive() { return ignorePassive; }
