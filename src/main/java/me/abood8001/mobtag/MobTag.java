@@ -16,6 +16,7 @@ public class MobTag extends JavaPlugin {
     private ToggleManager toggleManager;
     private boolean papiEnabled = false;
     private boolean mythicMobsEnabled = false;
+    private boolean packetEventsEnabled = false;
 
     @Override
     public void onEnable() {
@@ -26,7 +27,6 @@ public class MobTag extends JavaPlugin {
         this.toggleManager = new ToggleManager(this);
 
         setupHooks();
-
         this.tagManager = new MobTagManager(this);
         getServer().getPluginManager().registerEvents(new MobTagListener(this), this);
 
@@ -51,6 +51,11 @@ public class MobTag extends JavaPlugin {
     }
 
     private void setupHooks() {
+        if (getServer().getPluginManager().getPlugin("packetevents") != null ||
+                getServer().getPluginManager().getPlugin("PacketEvents") != null) {
+            packetEventsEnabled = true;
+            getLogger().info("PacketEvents hook enabled - smooth tag movement active.");
+        }
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             if (mobTagConfig.isPapiEnabled()) {
                 new PAPIHook(this).register();
@@ -72,6 +77,10 @@ public class MobTag extends JavaPlugin {
         reloadConfig();
         this.mobTagConfig = new MobTagConfig(this);
         this.toggleManager = new ToggleManager(this);
+        this.papiEnabled = false;
+        this.mythicMobsEnabled = false;
+        this.mythicMobsHook = null;
+        setupHooks();
         if (tagManager != null) {
             tagManager.removeAllTags();
             tagManager.reload();
@@ -85,4 +94,5 @@ public class MobTag extends JavaPlugin {
     public ToggleManager getToggleManager() { return toggleManager; }
     public boolean isPapiEnabled() { return papiEnabled; }
     public boolean isMythicMobsEnabled() { return mythicMobsEnabled; }
+    public boolean isPacketEventsEnabled() { return packetEventsEnabled; }
 }

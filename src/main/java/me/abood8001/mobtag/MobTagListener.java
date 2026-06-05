@@ -41,6 +41,29 @@ public class MobTagListener implements Listener {
         plugin.getTagManager().removeTag(event.getEntity().getUniqueId());
     }
 
+    @EventHandler
+    public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        for (var display : plugin.getTagManager().getTags().values()) {
+            if (display instanceof me.abood8001.mobtag.display.PacketDisplay pd) {
+                pd.removeFor(player);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            for (var display : plugin.getTagManager().getTags().values()) {
+                if (display instanceof me.abood8001.mobtag.display.PacketDisplay pd) {
+                    pd.removeFor(player);
+                }
+            }
+        }, 20L); // 1-second delay
+    }
+
+
 
     /**
      * Clean up tags for mobs in unloaded chunks.

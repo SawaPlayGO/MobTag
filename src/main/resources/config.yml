@@ -22,10 +22,18 @@ display-range: 16.0
 # Height offset of the tag above the mob's head (in blocks).
 tag-height-offset: 0.3
 
+# Display mode for health tags
+# Options:
+#   AUTO        - Automatically uses PacketEvents if installed, ArmorStand otherwise
+#   ARMORSTAND  - Always use ArmorStands (works everywhere, slight stutter when mob moves)
+#   PACKET      - Always use PacketEvents (smooth movement, requires PacketEvents plugin)
+display-mode: AUTO
+
 # Who can see the tags?
 # Options:
 #   ALL     - All players within range see the tag
 #   DAMAGER - Only the player who last damaged the mob sees the tag
+#   LOOKING_AT - Only the player currently looking at the mob sees the tag
 visibility-mode: ALL
 
 # Ignore peaceful mobs (cows, pigs, sheep, etc)?

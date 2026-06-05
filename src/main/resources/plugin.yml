@@ -9,6 +9,7 @@ softdepend:
   - PlaceholderAPI
   - MythicMobs
   - SimplePets
+  - packetevents
 
 commands:
   mobtag:

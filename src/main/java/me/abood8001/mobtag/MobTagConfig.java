@@ -44,6 +44,7 @@ public class MobTagConfig {
 
     private List<String> blacklistedWorlds;
     private Map<String, String> entityFormats;
+    private String displayMode;
 
     public MobTagConfig(MobTag plugin) {
         this.plugin = plugin;
@@ -88,6 +89,7 @@ public class MobTagConfig {
         msgReloadSuccess  = cfg.getString("messages.reload-success", "&aConfiguration reloaded successfully!");
         msgNoPermission   = cfg.getString("messages.no-permission", "&cYou don't have permission to do that.");
         msgUnknownCommand = cfg.getString("messages.unknown-command", "&cUnknown sub-command. Usage: /mobtag reload");
+        displayMode = cfg.getString("display-mode", "AUTO").toUpperCase();
     }
 
     // ── Getters ──────────────────────────────────────────────
@@ -122,4 +124,6 @@ public class MobTagConfig {
     public String getMsgReloadSuccess() { return msgReloadSuccess; }
     public String getMsgNoPermission() { return msgNoPermission; }
     public String getMsgUnknownCommand() { return msgUnknownCommand; }
+
+    public String getDisplayMode() { return displayMode; }
 }

@@ -4,6 +4,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.*;
+import me.abood8001.mobtag.display.TagDisplay;
+import me.abood8001.mobtag.display.ArmorStandDisplay;
+import me.abood8001.mobtag.display.PacketDisplay;
+
 
 
 import java.util.*;
@@ -14,7 +18,7 @@ public class MobTagManager {
     private final MobTag plugin;
 
     // Maps mob UUID -> ArmorStand tag entity
-    private final Map<UUID, ArmorStand> tags = new ConcurrentHashMap<>();
+    private final Map<UUID, TagDisplay> tags = new ConcurrentHashMap<>();
 
     // Maps mob UUID -> UUID of last damager
     private final Map<UUID, UUID> lastDamager = new ConcurrentHashMap<>();
@@ -60,11 +64,27 @@ public class MobTagManager {
             for (LivingEntity entity : world.getLivingEntities()) {
                 try {
                     if (!shouldTag(entity)) continue;
-                    Player viewer = getViewer(entity, rangeSquared, cfg.getVisibilityMode());
-                    if (viewer != null && !plugin.getToggleManager().isHidden(viewer.getUniqueId())) {
-                        showTag(entity, viewer);
+                    String mode = cfg.getVisibilityMode();
+
+                    if ("ALL".equals(mode)) {
+                        boolean anyInRange = false;
+                        for (Player p : entity.getWorld().getPlayers()) {
+                            if (p.getGameMode() == org.bukkit.GameMode.SPECTATOR) continue;
+                            if (p.getLocation().distanceSquared(entity.getLocation()) > rangeSquared) continue;
+                            if (plugin.getToggleManager().isHidden(p.getUniqueId())) continue;
+                            showTag(entity, p);
+                            anyInRange = true;
+                        }
+                        if (!anyInRange) {
+                            removeTag(entity.getUniqueId());
+                        }
                     } else {
-                        removeTag(entity.getUniqueId());
+                        Player viewer = getViewer(entity, rangeSquared, mode);
+                        if (viewer != null && !plugin.getToggleManager().isHidden(viewer.getUniqueId())) {
+                            showTag(entity, viewer);
+                        } else {
+                            removeTag(entity.getUniqueId());
+                        }
                     }
                 } catch (Exception ignored) {}
             }
@@ -73,9 +93,9 @@ public class MobTagManager {
         // Clean up tags for mobs that are gone
         tags.entrySet().removeIf(entry -> {
             UUID uid = entry.getKey();
-            ArmorStand stand = entry.getValue();
+            TagDisplay display = entry.getValue();
             if (Bukkit.getEntity(uid) == null) {
-                if (!stand.isDead()) stand.remove();
+                display.remove();
                 lastDamager.remove(uid);
                 return true;
             }
@@ -116,6 +136,7 @@ public class MobTagManager {
 
         // Skip ArmorStands (our own tags)
         if (entity instanceof ArmorStand) return false;
+        if (entity instanceof TextDisplay) return false;
 
         if (plugin.getMobTagConfig().getBlacklistedWorlds().contains(entity.getWorld().getName())) return false;
 
@@ -137,18 +158,48 @@ public class MobTagManager {
     public void showTag(LivingEntity entity, Player viewer) {
         MobTagConfig cfg = plugin.getMobTagConfig();
         String text = buildTagText(entity, viewer, cfg);
-
         UUID uid = entity.getUniqueId();
         Location tagLoc = getTagLocation(entity, cfg);
 
-        ArmorStand stand = tags.get(uid);
+        TagDisplay display = tags.get(uid);
 
-        if (stand == null || stand.isDead()) {
-            stand = spawnTagStand(tagLoc, text);
-            tags.put(uid, stand);
+        if (display == null || display.isDead()) {
+            display = createDisplay(tagLoc, text, cfg, entity);
+            tags.put(uid, display);
+        }
+
+        // Remove old viewers who are no longer in range (for PacketDisplay)
+        if (display instanceof PacketDisplay pd) {
+            double rangeSquared = cfg.getDisplayRange() * cfg.getDisplayRange();
+            for (UUID oldViewerId : new java.util.HashSet<>(pd.getViewers())) {
+                Player oldViewer = Bukkit.getPlayer(oldViewerId);
+                if (oldViewer == null || !oldViewer.isOnline()
+                        || oldViewer.getWorld() != entity.getWorld()
+                        || oldViewer.getLocation().distanceSquared(entity.getLocation()) > rangeSquared) {
+                    pd.removeFor(oldViewer != null ? oldViewer : null);
+                }
+            }
+        }
+
+        display.update(tagLoc, text, viewer);
+    }
+
+    private TagDisplay createDisplay(Location loc, String text, MobTagConfig cfg, LivingEntity mob) {
+        String mode = cfg.getDisplayMode();
+        boolean usePackets = false;
+
+
+        if ("PACKET".equals(mode)) {
+            usePackets = plugin.isPacketEventsEnabled();
+        } else if ("AUTO".equals(mode)) {
+            usePackets = plugin.isPacketEventsEnabled();
+        }
+        // ARMORSTAND mode always uses ArmorStand
+
+        if (usePackets) {
+            return new PacketDisplay(loc, text, mob.getEntityId(), (float) cfg.getTagHeightOffset());
         } else {
-            stand.teleport(tagLoc);
-            stand.setCustomName(text);
+            return new ArmorStandDisplay(loc, text);
         }
     }
 
@@ -157,21 +208,6 @@ public class MobTagManager {
         return entity.getLocation().clone().add(0, height, 0);
     }
 
-    private ArmorStand spawnTagStand(Location loc, String text) {
-        ArmorStand stand = loc.getWorld().spawn(loc, ArmorStand.class, as -> {
-            as.setVisible(false);
-            as.setGravity(false);
-            as.setCanPickupItems(false);
-            as.setCustomNameVisible(true);
-            as.setCustomName(text);
-            as.setInvulnerable(true);
-            as.setSilent(true);
-            as.setSmall(true);
-            as.setMarker(true);
-            as.setPersistent(false);
-        });
-        return stand;
-    }
 
     private String buildTagText(LivingEntity entity, Player viewer, MobTagConfig cfg) {
         double current = entity.getHealth();
@@ -193,6 +229,13 @@ public class MobTagManager {
                 format = mythicFmt;
                 String mythicName = plugin.getMythicMobsHook().getMythicMobName(entity);
                 format = format.replace("{mythic_name}", mythicName);
+            }
+        }
+
+        // In PACKET mode, prepend mob name since passenger hides the mob's nametag
+        if (plugin.isPacketEventsEnabled() && !"ARMORSTAND".equals(cfg.getDisplayMode())) {
+            if (entity.getCustomName() != null && !entity.getCustomName().isEmpty()) {
+                format = format + "\n" + entity.getCustomName();
             }
         }
 
@@ -288,15 +331,13 @@ public class MobTagManager {
     }
 
     public void removeTag(UUID uid) {
-        ArmorStand stand = tags.remove(uid);
-        if (stand != null && !stand.isDead()) {
-            stand.remove();
-        }
+        TagDisplay display = tags.remove(uid);
+        if (display != null) display.remove();
     }
 
     public void removeAllTags() {
-        for (ArmorStand stand : tags.values()) {
-            if (!stand.isDead()) stand.remove();
+        for (TagDisplay display : tags.values()) {
+            display.remove();
         }
         tags.clear();
         lastDamager.clear();
@@ -307,7 +348,8 @@ public class MobTagManager {
         lastDamager.put(mobUID, playerUID);
     }
 
-    public Map<UUID, ArmorStand> getTags() {
+    public Map<UUID, TagDisplay> getTags() {
         return tags;
     }
+
 }
