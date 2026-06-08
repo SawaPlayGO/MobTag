@@ -7,7 +7,7 @@ import org.bukkit.entity.*;
 import me.abood8001.mobtag.display.TagDisplay;
 import me.abood8001.mobtag.display.ArmorStandDisplay;
 import me.abood8001.mobtag.display.PacketDisplay;
-
+import org.bukkit.util.RayTraceResult;
 
 
 import java.util.*;
@@ -77,6 +77,46 @@ public class MobTagManager {
                         }
                         if (!anyInRange) {
                             removeTag(entity.getUniqueId());
+                        }
+                    } else if ("LOOKING_AT".equals(mode)) {
+                        TagDisplay display = tags.get(entity.getUniqueId());
+                        if (display == null || display.isDead()) {
+                            Location tagLoc = getTagLocation(entity, cfg);
+                            String text = buildTagText(entity, null, cfg);
+                            display = createDisplay(tagLoc, text, cfg, entity);
+                            tags.put(entity.getUniqueId(), display);
+                        }
+
+                        if (display instanceof PacketDisplay pd) {
+                            for (Player p : entity.getWorld().getPlayers()) {
+                                if (p.getGameMode() == org.bukkit.GameMode.SPECTATOR) continue;
+                                if (plugin.getToggleManager().isHidden(p.getUniqueId())) continue;
+                                if (p.getLocation().distanceSquared(entity.getLocation()) > rangeSquared) {
+                                    pd.removeFor(p);
+                                    continue;
+                                }
+                                if (isLookingAt(p, entity, cfg)) {
+                                    showTag(entity, p);
+                                } else {
+                                    pd.removeFor(p);
+                                }
+                            }
+                        } else if (display instanceof ArmorStandDisplay asd) {
+                            boolean anyLooking = false;
+                            for (Player p : entity.getWorld().getPlayers()) {
+                                if (p.getGameMode() == org.bukkit.GameMode.SPECTATOR) continue;
+                                if (plugin.getToggleManager().isHidden(p.getUniqueId())) continue;
+                                if (p.getLocation().distanceSquared(entity.getLocation()) > rangeSquared) continue;
+                                if (isLookingAt(p, entity, cfg)) {
+                                    anyLooking = true;
+                                    break;
+                                }
+                            }
+                            if (anyLooking) {
+                                asd.showFor();
+                            } else {
+                                asd.hideFor();
+                            }
                         }
                     } else {
                         Player viewer = getViewer(entity, rangeSquared, mode);
@@ -199,7 +239,7 @@ public class MobTagManager {
         if (usePackets) {
             return new PacketDisplay(loc, text, mob.getEntityId(), (float) cfg.getTagHeightOffset());
         } else {
-            return new ArmorStandDisplay(loc, text);
+            return new ArmorStandDisplay(loc, text, plugin);
         }
     }
 
@@ -350,6 +390,17 @@ public class MobTagManager {
 
     public Map<UUID, TagDisplay> getTags() {
         return tags;
+    }
+
+    private boolean isLookingAt(Player player, LivingEntity entity, MobTagConfig cfg) {
+        RayTraceResult result = player.getWorld().rayTraceEntities(
+                player.getEyeLocation(),
+                player.getEyeLocation().getDirection(),
+                cfg.getLookingLen(),
+                e -> !e.equals(player)
+        );
+        if (result == null) return false;
+        return entity.equals(result.getHitEntity());
     }
 
 }

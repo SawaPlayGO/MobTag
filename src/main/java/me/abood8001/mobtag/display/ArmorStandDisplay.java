@@ -1,5 +1,8 @@
 package me.abood8001.mobtag.display;
 
+import io.lumine.mythic.bukkit.utils.lib.jooq.True;
+import me.abood8001.mobtag.MobTag;
+import me.abood8001.mobtag.MobTagConfig;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
@@ -8,13 +11,15 @@ import org.bukkit.entity.Player;
 public class ArmorStandDisplay implements TagDisplay {
 
     private ArmorStand stand;
+    private final MobTag plugin;
 
-    public ArmorStandDisplay(Location loc, String text) {
+    public ArmorStandDisplay(Location loc, String text, MobTag plugin) {
+        this.plugin = plugin;
         this.stand = loc.getWorld().spawn(loc, ArmorStand.class, as -> {
             as.setVisible(false);
             as.setGravity(false);
             as.setCanPickupItems(false);
-            as.setCustomNameVisible(true);
+            as.setCustomNameVisible(this.visibleByDefault());
             as.setCustomName(text);
             as.setInvulnerable(true);
             as.setSilent(true);
@@ -40,4 +45,20 @@ public class ArmorStandDisplay implements TagDisplay {
     public boolean isDead() {
         return stand == null || stand.isDead();
     }
+
+    public void showFor() {
+        if (stand == null || stand.isDead()) return;
+        stand.setCustomNameVisible(true);
+    }
+
+    public void hideFor() {
+        if (stand == null || stand.isDead()) return;
+        stand.setCustomNameVisible(false);
+    }
+
+    private boolean visibleByDefault() {
+        MobTagConfig cfg = plugin.getMobTagConfig();
+        return !cfg.getVisibilityMode().equals("LOOKING_AT");
+    }
+
 }

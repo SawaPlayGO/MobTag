@@ -19,6 +19,9 @@ update-interval: 4
 # The range (in blocks) a player must be within to see a tag.
 display-range: 16.0
 
+# The max length for check tag mobe (ONLY LOOKING_AT MODE)
+looking-len: 5.0
+
 # Height offset of the tag above the mob's head (in blocks).
 tag-height-offset: 0.3
 
